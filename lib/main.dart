@@ -1,17 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// TODO: Firebase セットアップ後にコメントアウトを外す
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:flutter_learn/firebase_options.dart';
+import 'package:flutter_learn/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: Firebase セットアップ後にコメントアウトを外す
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     const ProviderScope(
