@@ -62,6 +62,7 @@ Domain は Firebase も Flutter も知らない
 | Phase 3 | Data層（UserModel・DataSource・RepositoryImpl） | [phase3-data-layer.md](./phase3-data-layer.md) |
 | Phase 4 | Presentation Providers（DI・AuthState・Notifier） | [phase4-presentation-providers.md](./phase4-presentation-providers.md) |
 | Phase 5 | UI 画面（GoRouter・3画面・Widgetテスト） | [phase5-ui-screens.md](./phase5-ui-screens.md) |
+| Phase 6 | Flutter Hooks（HookConsumerWidget・useTextEditingController・useState） | [phase6-flutter-hooks.md](./phase6-flutter-hooks.md) |
 
 ---
 
@@ -95,7 +96,8 @@ Layer 4: Widget テスト
 
 | パッケージ | 役割 | 選定理由 |
 |---|---|---|
-| `flutter_riverpod` | 状態管理・DI | Provider より型安全、BLoC よりシンプル |
+| `hooks_riverpod` | 状態管理・DI・Hooks 統合 | `flutter_riverpod` + `flutter_hooks` を一つにまとめたパッケージ |
+| `flutter_hooks` | ローカル状態の Hook 管理 | `initState`/`dispose` のボイラープレートを排除 |
 | `go_router` | ルーティング | 宣言的 redirect ガード |
 | `freezed` | イミュータブルクラス | sealed class でコンパイル時に全ケース網羅を強制 |
 | `fpdart` | Either 型 | エラーを型に出す（見落とし不可） |

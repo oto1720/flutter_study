@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_learn/core/error/failure.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
 import 'package:flutter_learn/features/auth/presentation/widgets/auth_text_field.dart';
 
-class RegisterScreen extends ConsumerStatefulWidget {
+class RegisterScreen extends HookConsumerWidget {
   const RegisterScreen({super.key});
 
   @override
-  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final emailController = useTextEditingController();
+    final passwordController = useTextEditingController();
+    final confirmPasswordController = useTextEditingController();
+    final formKey = useState(GlobalKey<FormState>());
 
-class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     ref.listen<AuthState>(authStateNotifierProvider, (previous, next) {
       next.maybeWhen(
         error: (failure) {
@@ -48,19 +36,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           .select((s) => s.maybeWhen(loading: () => true, orElse: () => false)),
     );
 
+    Future<void> onRegister() async {
+      if (!formKey.value.currentState!.validate()) return;
+      await ref.read(authStateNotifierProvider.notifier).signUpWithEmail(
+            emailController.text.trim(),
+            passwordController.text,
+          );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('アカウント作成')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: _formKey,
+            key: formKey.value,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
                 AuthTextField(
-                  controller: _emailController,
+                  controller: emailController,
                   label: 'メールアドレス',
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -71,7 +67,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 AuthTextField(
-                  controller: _passwordController,
+                  controller: passwordController,
                   label: 'パスワード',
                   obscureText: true,
                   validator: (value) {
@@ -82,11 +78,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 AuthTextField(
-                  controller: _confirmPasswordController,
+                  controller: confirmPasswordController,
                   label: 'パスワード（確認）',
                   obscureText: true,
                   validator: (value) {
-                    if (value != _passwordController.text) {
+                    if (value != passwordController.text) {
                       return 'パスワードが一致しません';
                     }
                     return null;
@@ -94,7 +90,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
-                  onPressed: isLoading ? null : _onRegister,
+                  onPressed: isLoading ? null : onRegister,
                   child: isLoading
                       ? const SizedBox(
                           height: 20,
@@ -109,13 +105,5 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _onRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-    await ref.read(authStateNotifierProvider.notifier).signUpWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
   }
 }

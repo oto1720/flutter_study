@@ -17,8 +17,11 @@ dependencies:
   google_sign_in: ^6.2.1
 
   # --- 状態管理 ---
-  flutter_riverpod: ^2.5.1
+  # hooks_riverpod は flutter_riverpod + flutter_hooks を統合したパッケージ
+  # HookConsumerWidget が使えるようになる
+  hooks_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
+  flutter_hooks: ^0.20.5
 
   # --- ルーティング ---
   go_router: ^14.3.0
