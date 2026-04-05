@@ -17,8 +17,10 @@ dependencies:
   firebase_auth: ^5.3.1       # 認証 SDK
   google_sign_in: ^6.2.1      # Google 認証
 
-  flutter_riverpod: ^2.5.1    # 状態管理・DI
+  # Phase 6 で flutter_riverpod → hooks_riverpod + flutter_hooks に移行済み
+  hooks_riverpod: ^2.5.1      # 状態管理・DI（flutter_riverpod + flutter_hooks の統合パッケージ）
   riverpod_annotation: ^2.3.5 # @riverpod アノテーション（コード生成）
+  flutter_hooks: ^0.20.5      # useTextEditingController / useState など
 
   go_router: ^14.3.0          # 宣言的ルーティング
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_learn/core/error/failure.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
 import 'package:flutter_learn/features/auth/presentation/screens/login_screen.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// テスト用に任意の初期状態を注入できる Notifier

@@ -1,34 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_learn/core/error/failure.dart';
 import 'package:flutter_learn/core/router/app_router.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
 import 'package:flutter_learn/features/auth/presentation/widgets/auth_text_field.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+// HookConsumerWidget: flutter_hooks + hooks_riverpod の組み合わせ
+// StatefulWidget + ConsumerWidget の代わりに使う
+// - useTextEditingController() でコントローラを管理（dispose 不要）
+// - ref.watch / ref.listen も使える
+class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // useTextEditingController: StatefulWidget の initState/dispose が不要になる
+    final emailController = useTextEditingController();
+    final passwordController = useTextEditingController();
+    // useState: StatefulWidget の setState の代わり
+    final formKey = useState(GlobalKey<FormState>());
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // AuthState の変化を監視してエラーを SnackBar で表示
-    // maybeWhen: error ケースだけ処理し、それ以外は orElse で無視
     ref.listen<AuthState>(authStateNotifierProvider, (previous, next) {
       next.maybeWhen(
         error: (failure) {
@@ -45,11 +38,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     });
 
-    // maybeWhen: loading ケースだけ true を返し、それ以外は false
     final isLoading = ref.watch(
       authStateNotifierProvider
           .select((s) => s.maybeWhen(loading: () => true, orElse: () => false)),
     );
+
+    Future<void> onSignIn() async {
+      if (!formKey.value.currentState!.validate()) return;
+      await ref.read(authStateNotifierProvider.notifier).signInWithEmail(
+            emailController.text.trim(),
+            passwordController.text,
+          );
+    }
+
+    Future<void> onGoogleSignIn() async {
+      await ref.read(authStateNotifierProvider.notifier).signInWithGoogle();
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('ログイン')),
@@ -57,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: _formKey,
+            key: formKey.value,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -69,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
                 AuthTextField(
-                  controller: _emailController,
+                  controller: emailController,
                   label: 'メールアドレス',
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -80,7 +84,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 AuthTextField(
-                  controller: _passwordController,
+                  controller: passwordController,
                   label: 'パスワード',
                   obscureText: true,
                   validator: (value) {
@@ -91,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
-                  onPressed: isLoading ? null : _onSignIn,
+                  onPressed: isLoading ? null : onSignIn,
                   child: isLoading
                       ? const SizedBox(
                           height: 20,
@@ -102,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: isLoading ? null : _onGoogleSignIn,
+                  onPressed: isLoading ? null : onGoogleSignIn,
                   icon: const Icon(Icons.login),
                   label: const Text('Google でログイン'),
                 ),
@@ -117,17 +121,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _onSignIn() async {
-    if (!_formKey.currentState!.validate()) return;
-    await ref.read(authStateNotifierProvider.notifier).signInWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-  }
-
-  Future<void> _onGoogleSignIn() async {
-    await ref.read(authStateNotifierProvider.notifier).signInWithGoogle();
   }
 }

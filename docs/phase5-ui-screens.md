@@ -228,6 +228,10 @@ final text = authState.when(
 
 ## 5. ConsumerWidget / ConsumerStatefulWidget
 
+> **Note:** Phase 6 で `ConsumerStatefulWidget` → `HookConsumerWidget` に移行した。
+> 現在の `LoginScreen` / `RegisterScreen` は `HookConsumerWidget` を使っている。
+> 移行の詳細は [phase6-flutter-hooks.md](./phase6-flutter-hooks.md) を参照。
+
 ### なぜ通常の Widget ではなく Consumer 系を使うか
 
 ```dart
@@ -246,7 +250,7 @@ class HomeScreen extends ConsumerWidget {
 }
 
 // ConsumerStatefulWidget: ref + State が両方使える
-// TextEditingController などのローカル状態が必要な場面で使う
+// TextEditingController などのローカル状態が必要な場面で使う（Phase 5 時点の実装）
 class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
@@ -256,11 +260,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen(...); // ref も使える
   }
 }
+
+// HookConsumerWidget: ConsumerStatefulWidget の代替（Phase 6 以降）
+// useTextEditingController で dispose 不要・State クラス不要
+class LoginScreen extends HookConsumerWidget {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final emailController = useTextEditingController(); // 自動 dispose
+    ref.listen(...); // ref も使える
+  }
+}
 ```
 
-### `dispose()` でコントローラーをクリーンアップ
+### `dispose()` でコントローラーをクリーンアップ（Phase 5 時点）
 
 ```dart
+// Phase 5: ConsumerStatefulWidget では手動 dispose が必要だった
 @override
 void dispose() {
   _emailController.dispose();   // メモリ解放
@@ -270,6 +284,7 @@ void dispose() {
 ```
 
 `TextEditingController` は内部でリスナーを持つため、`dispose()` を呼ばないとメモリリークになる。
+Phase 6 では `useTextEditingController()` が自動で `dispose` するため、この記述が不要になった。
 
 ---
 
@@ -423,7 +438,7 @@ Phase 1 〜 5 を通して実装したデータの流れ：
 ```
 ユーザーが「ログイン」ボタンをタップ
     ↓
-LoginScreen._onSignIn()
+LoginScreen の onSignIn()（Phase 6 以降は build 内のローカル関数）
     ↓
 ref.read(authStateNotifierProvider.notifier).signInWithEmail(email, password)
     ↓ [Phase 4: Notifier]
