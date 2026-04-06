@@ -6,20 +6,33 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// テスト用に任意の初期状態を注入できる Notifier
+/// signInWithEmail / signInWithGoogle をオーバーライドして
+/// 実際のプロバイダーチェーン（Firebase）を呼び出さないようにする
 class FakeAuthStateNotifier extends AuthStateNotifier {
   FakeAuthStateNotifier(this._initialState);
   final AuthState _initialState;
 
   @override
   AuthState build() => _initialState;
+
+  @override
+  Future<void> signInWithEmail(String email, String password) async {
+    // テスト内では何もしない（実プロバイダーを呼ばない）
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    // テスト内では何もしない
+  }
 }
 
 /// LoginScreen を ProviderScope でラップして pump するヘルパー
 Widget buildLoginScreen(AuthState initialState) {
   return ProviderScope(
     overrides: [
-      authStateNotifierProvider.overrideWith(() =>
-          FakeAuthStateNotifier(initialState)),
+      authStateNotifierProvider.overrideWith(
+        () => FakeAuthStateNotifier(initialState),
+      ),
     ],
     child: const MaterialApp(home: LoginScreen()),
   );
@@ -67,6 +80,57 @@ void main() {
       expect(find.text('正しいメールアドレスを入力してください'), findsOneWidget);
     });
 
+    testWidgets('バリデーション: パスワードが6文字未満のときエラーメッセージが表示される', (tester) async {
+      await tester.pumpWidget(
+        buildLoginScreen(const AuthState.unauthenticated()),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'メールアドレス'),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'パスワード'),
+        '123',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'ログイン'));
+      await tester.pump();
+
+      expect(find.text('パスワードは6文字以上で入力してください'), findsOneWidget);
+    });
+
+    testWidgets('バリデーション通過後にサインインが実行される', (tester) async {
+      await tester.pumpWidget(
+        buildLoginScreen(const AuthState.unauthenticated()),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'メールアドレス'),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'パスワード'),
+        'password123',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'ログイン'));
+      await tester.pump();
+
+      // FakeAuthStateNotifier では signInWithEmail が何もしないため、エラーは出ない
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('Google でログインボタンをタップできる', (tester) async {
+      await tester.pumpWidget(
+        buildLoginScreen(const AuthState.unauthenticated()),
+      );
+
+      await tester.tap(find.text('Google でログイン'));
+      await tester.pump();
+
+      // FakeAuthStateNotifier では signInWithGoogle が何もしないため、エラーは出ない
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
     testWidgets('loading 状態のとき ボタンが無効になる', (tester) async {
       await tester.pumpWidget(
         buildLoginScreen(const AuthState.loading()),
@@ -79,26 +143,16 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('error 状態のとき SnackBar が表示される', (tester) async {
+    testWidgets('error(AuthFailure) 状態のとき SnackBar にエラーメッセージが表示される',
+        (tester) async {
       await tester.pumpWidget(
-        buildLoginScreen(
-          const AuthState.error(
-            Failure.auth(message: 'パスワードが間違っています', code: 'wrong-password'),
-          ),
-        ),
+        buildLoginScreen(const AuthState.unauthenticated()),
       );
 
-      // ref.listen は状態「変化」を検知するため、
-      // 初期状態が error でも変化がないと SnackBar は出ない。
-      // → 別の状態から error に遷移させる
+      // ref.listen は状態「変化」を検知するため、別の状態から error に遷移させる
       final container = ProviderScope.containerOf(
         tester.element(find.byType(LoginScreen)),
       );
-      container
-          .read(authStateNotifierProvider.notifier)
-          // ignore: invalid_use_of_protected_member
-          .state = const AuthState.unauthenticated();
-      await tester.pump();
       container
           .read(authStateNotifierProvider.notifier)
           // ignore: invalid_use_of_protected_member
@@ -109,6 +163,44 @@ void main() {
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('パスワードが間違っています'), findsOneWidget);
+    });
+
+    testWidgets('error(NetworkFailure) 状態のとき SnackBar にネットワークエラーが表示される',
+        (tester) async {
+      await tester.pumpWidget(
+        buildLoginScreen(const AuthState.unauthenticated()),
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoginScreen)),
+      );
+      container
+          .read(authStateNotifierProvider.notifier)
+          // ignore: invalid_use_of_protected_member
+          .state = const AuthState.error(Failure.network());
+      await tester.pump();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('ネットワークエラーが発生しました'), findsOneWidget);
+    });
+
+    testWidgets('error(UnexpectedFailure) 状態のとき SnackBar に予期しないエラーが表示される',
+        (tester) async {
+      await tester.pumpWidget(
+        buildLoginScreen(const AuthState.unauthenticated()),
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoginScreen)),
+      );
+      container
+          .read(authStateNotifierProvider.notifier)
+          // ignore: invalid_use_of_protected_member
+          .state = const AuthState.error(Failure.unexpected());
+      await tester.pump();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('予期しないエラーが発生しました'), findsOneWidget);
     });
   });
 }

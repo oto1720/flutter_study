@@ -100,6 +100,56 @@ void main() {
       });
     });
 
+    group('signInWithGoogle', () {
+      test('成功: loading → authenticated の順に遷移する', () async {
+        when(() => mockRepository.signInWithGoogle())
+            .thenAnswer((_) async => const Right(tUser));
+
+        final container = makeContainer();
+        final states = <AuthState>[];
+        container.listen(
+          authStateNotifierProvider,
+          (_, next) => states.add(next),
+          fireImmediately: false,
+        );
+
+        await container
+            .read(authStateNotifierProvider.notifier)
+            .signInWithGoogle();
+
+        expect(states, [
+          const AuthState.loading(),
+          AuthState.authenticated(tUser),
+        ]);
+      });
+
+      test('失敗: loading → error の順に遷移する', () async {
+        const tFailure = Failure.auth(
+          message: 'Google サインインがキャンセルされました',
+          code: 'cancelled',
+        );
+        when(() => mockRepository.signInWithGoogle())
+            .thenAnswer((_) async => const Left(tFailure));
+
+        final container = makeContainer();
+        final states = <AuthState>[];
+        container.listen(
+          authStateNotifierProvider,
+          (_, next) => states.add(next),
+          fireImmediately: false,
+        );
+
+        await container
+            .read(authStateNotifierProvider.notifier)
+            .signInWithGoogle();
+
+        expect(states, [
+          const AuthState.loading(),
+          const AuthState.error(tFailure),
+        ]);
+      });
+    });
+
     group('signUpWithEmail', () {
       test('成功: loading → authenticated の順に遷移する', () async {
         when(
@@ -126,6 +176,36 @@ void main() {
           AuthState.authenticated(tUser),
         ]);
       });
+
+      test('失敗: loading → error の順に遷移する', () async {
+        const tFailure = Failure.auth(
+          message: 'このメールアドレスはすでに使用されています',
+          code: 'email-already-in-use',
+        );
+        when(
+          () => mockRepository.signUpWithEmail(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => const Left(tFailure));
+
+        final container = makeContainer();
+        final states = <AuthState>[];
+        container.listen(
+          authStateNotifierProvider,
+          (_, next) => states.add(next),
+          fireImmediately: false,
+        );
+
+        await container
+            .read(authStateNotifierProvider.notifier)
+            .signUpWithEmail('existing@example.com', 'password123');
+
+        expect(states, [
+          const AuthState.loading(),
+          const AuthState.error(tFailure),
+        ]);
+      });
     });
 
     group('signOut', () {
@@ -146,6 +226,27 @@ void main() {
         expect(states, [
           const AuthState.loading(),
           const AuthState.unauthenticated(),
+        ]);
+      });
+
+      test('失敗: loading → error の順に遷移する', () async {
+        const tFailure = Failure.unexpected();
+        when(() => mockRepository.signOut())
+            .thenAnswer((_) async => const Left(tFailure));
+
+        final container = makeContainer();
+        final states = <AuthState>[];
+        container.listen(
+          authStateNotifierProvider,
+          (_, next) => states.add(next),
+          fireImmediately: false,
+        );
+
+        await container.read(authStateNotifierProvider.notifier).signOut();
+
+        expect(states, [
+          const AuthState.loading(),
+          const AuthState.error(tFailure),
         ]);
       });
     });
@@ -177,6 +278,21 @@ void main() {
         );
 
         authStreamController.add(null);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states.last, const AuthState.unauthenticated());
+      });
+
+      test('ストリームがエラーを流したとき unauthenticated になる', () async {
+        final container = makeContainer();
+        final states = <AuthState>[];
+        container.listen(
+          authStateNotifierProvider,
+          (_, next) => states.add(next),
+          fireImmediately: false,
+        );
+
+        authStreamController.addError(Exception('network error'));
         await Future<void>.delayed(Duration.zero);
 
         expect(states.last, const AuthState.unauthenticated());
