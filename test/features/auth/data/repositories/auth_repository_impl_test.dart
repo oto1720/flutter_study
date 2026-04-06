@@ -107,6 +107,18 @@ void main() {
     });
   });
 
+  group('signInWithGoogle', () {
+    test('Google サインイン成功 → Right(AppUser) を返す', () async {
+      final result = await repository.signInWithGoogle();
+
+      expect(result.isRight(), isTrue);
+      result.fold(
+        (_) => fail('失敗が返るはずがない'),
+        (user) => expect(user.email, isNotEmpty),
+      );
+    });
+  });
+
   group('signOut', () {
     test('サインアウト成功 → Right(unit) を返す', () async {
       final result = await repository.signOut();

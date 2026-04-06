@@ -63,6 +63,7 @@ Domain は Firebase も Flutter も知らない
 | Phase 4 | Presentation Providers（DI・AuthState・Notifier） | [phase4-presentation-providers.md](./phase4-presentation-providers.md) |
 | Phase 5 | UI 画面（GoRouter・3画面・Widgetテスト） | [phase5-ui-screens.md](./phase5-ui-screens.md) |
 | Phase 6 | Flutter Hooks（HookConsumerWidget・useTextEditingController・useState） | [phase6-flutter-hooks.md](./phase6-flutter-hooks.md) |
+| Phase 7 | テスト戦略（4層テスト・mocktail・ProviderContainer・カバレッジ70%） | [phase7-testing.md](./phase7-testing.md) |
 
 ---
 
