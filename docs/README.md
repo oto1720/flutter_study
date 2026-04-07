@@ -65,6 +65,7 @@ Domain は Firebase も Flutter も知らない
 | Phase 6 | Flutter Hooks（HookConsumerWidget・useTextEditingController・useState） | [phase6-flutter-hooks.md](./phase6-flutter-hooks.md) |
 | Phase 7 | テスト戦略（4層テスト・mocktail・ProviderContainer・カバレッジ70%） | [phase7-testing.md](./phase7-testing.md) |
 | Phase 8 | パフォーマンス最適化（DevTools・select・RepaintBoundary・const） | [phase8-performance.md](./phase8-performance.md) |
+| Phase 9 | メモリリーク対策（StreamSubscription・Controller dispose・ref.listen・DevTools） | [phase9-memory-leak.md](./phase9-memory-leak.md) |
 
 ---
 
