@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_learn/features/auth/domain/entities/app_user.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
+import 'package:flutter_learn/features/device/presentation/providers/device_info_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,9 @@ class HomeScreen extends ConsumerWidget {
         (s) => s.maybeWhen(authenticated: (user) => user, orElse: () => null),
       ),
     );
+
+    // ✅ deviceInfoProvider は AsyncNotifierProvider — AsyncValue で取得
+    final deviceInfoAsync = ref.watch(deviceInfoProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -59,6 +63,17 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     _InfoTile(label: 'ユーザーID', value: user?.id ?? '-'),
+                    const SizedBox(height: 8),
+                    // ✅ MethodChannel 経由で取得したデバイス情報を表示
+                    // AsyncValue.when で loading / error / data を安全にハンドリング
+                    _InfoTile(
+                      label: 'デバイス',
+                      value: deviceInfoAsync.when(
+                        data: (info) => info.model,
+                        loading: () => '取得中...',
+                        error: (_, __) => '取得失敗',
+                      ),
+                    ),
                   ],
                 ),
               ),
