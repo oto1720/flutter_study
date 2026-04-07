@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_learn/core/router/app_router.dart';
 import 'package:flutter_learn/features/auth/domain/entities/app_user.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
 
@@ -23,6 +25,11 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ホーム'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'メモリリーク学習デモ',
+            onPressed: () => context.push(Routes.leakDemo),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'サインアウト',

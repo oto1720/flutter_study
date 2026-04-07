@@ -6,6 +6,11 @@ import 'package:flutter_learn/features/auth/presentation/providers/auth_state_no
 import 'package:flutter_learn/features/auth/presentation/screens/home_screen.dart';
 import 'package:flutter_learn/features/auth/presentation/screens/login_screen.dart';
 import 'package:flutter_learn/features/auth/presentation/screens/register_screen.dart';
+import 'package:flutter_learn/features/leak_demo/leak_demo_menu_screen.dart';
+import 'package:flutter_learn/features/leak_demo/pattern1_stream_screen.dart';
+import 'package:flutter_learn/features/leak_demo/pattern2_controller_screen.dart';
+import 'package:flutter_learn/features/leak_demo/pattern3_listener_screen.dart';
+import 'package:flutter_learn/features/leak_demo/pattern4_async_context_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -14,6 +19,12 @@ abstract final class Routes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/home';
+  // メモリリーク学習デモ
+  static const leakDemo = '/leak-demo';
+  static const leakPattern1 = '/leak-demo/pattern1';
+  static const leakPattern2 = '/leak-demo/pattern2';
+  static const leakPattern3 = '/leak-demo/pattern3';
+  static const leakPattern4 = '/leak-demo/pattern4';
 }
 
 /// GoRouter の設定
@@ -56,6 +67,26 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.home,
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: Routes.leakDemo,
+        builder: (context, state) => const LeakDemoMenuScreen(),
+      ),
+      GoRoute(
+        path: Routes.leakPattern1,
+        builder: (context, state) => const Pattern1CompareScreen(),
+      ),
+      GoRoute(
+        path: Routes.leakPattern2,
+        builder: (context, state) => const Pattern2CompareScreen(),
+      ),
+      GoRoute(
+        path: Routes.leakPattern3,
+        builder: (context, state) => const Pattern3CompareScreen(),
+      ),
+      GoRoute(
+        path: Routes.leakPattern4,
+        builder: (context, state) => const Pattern4CompareScreen(),
       ),
     ],
   );
