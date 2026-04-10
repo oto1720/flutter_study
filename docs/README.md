@@ -67,6 +67,7 @@ Domain は Firebase も Flutter も知らない
 | Phase 8 | パフォーマンス最適化（DevTools・select・RepaintBoundary・const） | [phase8-performance.md](./phase8-performance.md) |
 | Phase 9 | メモリリーク対策（StreamSubscription・Controller dispose・ref.listen・DevTools） | [phase9-memory-leak.md](./phase9-memory-leak.md) |
 | Phase 10 | MethodChannel（Flutter↔ネイティブ連携・デバイス情報取得・PlatformException処理） | [phase10-method-channel.md](./phase10-method-channel.md) |
+| Phase 11 | バックエンド API 連携（dio・retrofit・キャッシュ・DioException→Failure変換） | [phase11-api-integration.md](./phase11-api-integration.md) |
 
 ---
 

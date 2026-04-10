@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_learn/features/auth/domain/entities/app_user.dart';
 import 'package:flutter_learn/features/auth/presentation/providers/auth_state_notifier.dart';
 import 'package:flutter_learn/features/device/presentation/providers/device_info_providers.dart';
+import 'package:flutter_learn/features/user_profile/presentation/providers/user_profile_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,11 @@ class HomeScreen extends ConsumerWidget {
     // ✅ deviceInfoProvider は AsyncNotifierProvider — AsyncValue で取得
     final deviceInfoAsync = ref.watch(deviceInfoProvider);
 
+    // ✅ userProfileProvider(1): keepAlive: true でキャッシュ
+    // 同じ userId の場合は HTTP を再送信しない
+    // JSONPlaceholder の userId=1 のプロフィールを表示
+    final profileAsync = ref.watch(userProfileProvider(1));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('ホーム'),
@@ -36,7 +42,7 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,10 +83,67 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              // ✅ API から取得したユーザープロフィールセクション
+              // keepAlive: true により一度取得したら再フェッチしない
+              RepaintBoundary(
+                child: _ApiProfileSection(profileAsync: profileAsync),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// API プロフィールセクション
+///
+/// AsyncValue の状態（loading / error / data）を安全にハンドリングして表示する。
+class _ApiProfileSection extends StatelessWidget {
+  const _ApiProfileSection({required this.profileAsync});
+
+  final AsyncValue<dynamic> profileAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'API プロフィール (JSONPlaceholder)',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
+        profileAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Card(
+            color: Theme.of(context).colorScheme.errorContainer,
+            child: ListTile(
+              leading: const Icon(Icons.error_outline),
+              title: Text(
+                '取得失敗',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ),
+          data: (profile) => Column(
+            children: [
+              _InfoTile(label: '名前', value: profile.name as String),
+              const SizedBox(height: 8),
+              _InfoTile(label: 'メール', value: profile.email as String),
+              const SizedBox(height: 8),
+              _InfoTile(label: '電話', value: profile.phone as String),
+              const SizedBox(height: 8),
+              _InfoTile(label: '会社名', value: profile.companyName as String),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

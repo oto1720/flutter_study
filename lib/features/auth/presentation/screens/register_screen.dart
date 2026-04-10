@@ -21,6 +21,7 @@ class RegisterScreen extends HookConsumerWidget {
           final message = switch (failure) {
             AuthFailure(:final message) => message,
             NetworkFailure() => 'ネットワークエラーが発生しました',
+            ServerFailure() => 'サーバーエラーが発生しました',
             UnexpectedFailure() => '予期しないエラーが発生しました',
           };
           ScaffoldMessenger.of(context)
