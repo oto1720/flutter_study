@@ -17,6 +17,9 @@ sealed class Failure with _$Failure {
   /// ネットワーク接続エラー
   const factory Failure.network() = NetworkFailure;
 
+  /// サーバーエラー（HTTP 4xx / 5xx）
+  const factory Failure.server({required int statusCode}) = ServerFailure;
+
   /// 予期しないエラー（上記以外の例外）
   const factory Failure.unexpected() = UnexpectedFailure;
 }
